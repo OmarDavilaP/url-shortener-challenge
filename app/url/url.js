@@ -1,19 +1,20 @@
-const uuidv4 = require('uuid/v4');
+const Joi = require('joi');
 const { domain } = require('../../environment');
 const SERVER = `${domain.protocol}://${domain.host}`;
 
 const UrlModel = require('./schema');
 const parseUrl = require('url').parse;
 const validUrl = require('valid-url');
-
 /**
- * Lookup for existant, active shortened URLs by hash.
+ * Lookup for existant, active shortened URLs by url.
+ * Using this approach to verify if URL is duplicated or not, so param was renamed to linkIdString 
+ * Query will search in hash for redirect or in url for find duplicate
  * 'null' will be returned when no matches were found.
- * @param {string} hash
+ * @param {string} linkIdString //
  * @returns {object}
  */
-async function getUrl(hash) {
-  let source = await UrlModel.findOne({ active: true, hash });
+async function getUrl(linkIdString) {
+  let source = await UrlModel.findOne({ active: true, $or: [{ hash: linkIdString }, { url: linkIdString }] });
   return source;
 }
 
@@ -21,21 +22,20 @@ async function getUrl(hash) {
  * Generate an unique hash-ish- for an URL.
  * TODO: Deprecated the use of UUIDs.
  * TODO: Implement a shortening algorithm
- * @param {string} id
+ * @param {string} url
  * @returns {string} hash
  */
 function generateHash(url) {
-  // return uuidv5(url, uuidv5.URL);
-  return uuidv4();
+  const Alpha = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_';
+  const convertUrltoB64 = Buffer.from(url).toString('base64');
+  let hash = '';
+  for (let i = 0; i < convertUrltoB64.length; i++) {
+    hash += Alpha.charAt(Math.floor(Math.random() * Alpha.length))
+  }
+  return hash.slice(0, 6);
+
 }
 
-/**
- * Generate a random token that will allow URLs to be (logical) removed
- * @returns {string} uuid v4
- */
-function generateRemoveToken() {
-  return uuidv4();
-}
 
 /**
  * Create an instance of a shortened URL in the DB.
@@ -58,7 +58,7 @@ async function shorten(url, hash) {
   const path = `${urlComponents.path || ''}${urlComponents.hash || ''}`;
 
   // Generate a token that will alow an URL to be removed (logical)
-  const removeToken = generateRemoveToken();
+  const removeToken = this.generateHash(url);
 
   // Create a new model instance
   const shortUrl = new UrlModel({
@@ -72,7 +72,12 @@ async function shorten(url, hash) {
     active: true
   });
 
-  const saved = await shortUrl.save();
+  try {
+    const saved = await shortUrl.save();
+  } catch (e) {
+    next(e)
+  }
+
   // TODO: Handle save errors
 
   return {
@@ -83,6 +88,37 @@ async function shorten(url, hash) {
   };
 
 }
+
+/**
+ * TODO: removeUrl
+ * @param {string} removeToken
+ * @param {string} hash
+ * @returns {object} 
+ */
+
+async function deleteURL(removeToken, hash) {
+  try {
+    return await UrlModel.deleteOne({ removeToken, hash });
+  } catch (e) {
+    next(e);
+  }
+
+}
+
+/**
+* TODO: regist visit
+* @param { string } id
+* @returns { object } 
+*/
+async function registerVisit(id) {
+  try {
+    return await UrlModel.findOneAndUpdate({ _id: id }, { $inc: { visit: 1 } });
+  } catch (e) {
+    next(e)
+  }
+
+}
+
 
 /**
  * Validate URI
@@ -97,6 +133,7 @@ module.exports = {
   shorten,
   getUrl,
   generateHash,
-  generateRemoveToken,
-  isValid
+  isValid,
+  deleteURL,
+  registerVisit
 }

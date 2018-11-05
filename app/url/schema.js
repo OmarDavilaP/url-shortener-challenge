@@ -38,5 +38,9 @@ module.exports = mongo.model('Url', new mongoose.Schema({
     type: Boolean,
     required: true,
     default: true
+  },
+  visit: {
+    type: Number,
+    default: 0
   }
 }));

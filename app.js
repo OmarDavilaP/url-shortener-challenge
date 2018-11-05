@@ -1,10 +1,9 @@
 const express = require('express');
+require('dotenv').config(); // first fix solved, it seems dotenv was ommited even when the packages was included in the .json file.
 const bodyParser = require('body-parser');
-
 const url = require('./app/url/routes');
-
 const app = express();
-
+const path = require('path');
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
