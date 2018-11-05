@@ -84,7 +84,7 @@ router.delete('/:hash/remove/:removeToken', async (req, res, next) => {
   try {
     const { deletedCount } = await url.deleteURL(removeToken, hash);
     //promiseRes.status = "OK";
-    promiseRes.message = (deletedCount > 0) ? "Object(s) removed: " + deletedCount : "Object not found or already deleted";
+    promiseRes.message = (deletedCount > 0) ? "URL has been removed properly. (Object removed: " + deletedCount+")": "URL not found or already deleted";
   } catch (e) {
     promiseRes.message = e;
   }
