@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon server/server.js",
-    "test": "jest"
+    "test": "jest",
+    "snyk-protect": "snyk protect",
+    "prepare": "npm run snyk-protect"
   },
   "author": "",
   "license": "ISC",
@@ -16,7 +18,8 @@
     "joi": "^14.0.4",
     "mongoose": "^4.12.3",
     "uuid": "^3.1.0",
-    "valid-url": "^1.0.9"
+    "valid-url": "^1.0.9",
+    "snyk": "^1.316.1"
   },
   "eslintConfig": {
     "env": {
@@ -33,5 +36,6 @@
     "jest": "^23.6.0",
     "nodemon": "^1.18.5",
     "supertest": "^3.3.0"
-  }
+  },
+  "snyk": true
 }
